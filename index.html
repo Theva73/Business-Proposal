@@ -74,11 +74,12 @@
             color: #4b5563;
             text-align: center;
         }
-        .page-break {
+        /* Page break class for PDF generation */
+        .html2pdf__page-break {
             page-break-before: always;
         }
-        /* **FIX:** Define unbreakable content blocks */
-        .pdf-block {
+        /* Class to prevent breaking inside an element */
+        .pdf-avoid-break {
             page-break-inside: avoid;
         }
         .spinner {
@@ -123,14 +124,15 @@
 
     <script>
         // --- Image URLs for the Appendix ---
+        // Using the new, simplified filenames you will create in Step 1.
         const appendixImages = [
-            { src: "https://i.imgur.com/8Qp271f.png", caption: "The main landing page serves as the central hub for all users, providing clear navigation to request clearance, access the admin panel, or view the 'Green List'." },
-            { src: "https://i.imgur.com/h5F6YjS.png", caption: "The Admin Dashboard provides a real-time overview of pending requests and existing clearances, with intuitive controls for management." },
-            { src: "https://i.imgur.com/uAd2d3S.png", caption: "The 'Green List' view for on-ground staff, featuring a prominent search bar and voice command option for quick, hands-free vehicle verification." },
-            { src: "https://i.imgur.com/V7i3a2c.png", caption: "The Secure Access portal requires both a valid User ID and successful geo-location verification to grant entry, ensuring a robust security layer." },
-            { src: "https://i.imgur.com/oDCz4tE.png", caption: "The public-facing clearance request form is designed for simplicity, allowing external users to submit necessary details with ease." },
-            { src: "https://i.imgur.com/BfP5P0H.png", caption: "Advanced access control settings allow administrators to manage authorized User IDs and define approved geographical zones (geo-fencing)." },
-            { src: "https://i.imgur.com/v09sQ3m.png", caption: "The database management panel offers powerful tools for administrators, including real-time statistics, data export, and secure data-wipe functions." }
+            { src: "https://raw.githubusercontent.com/theva73/Business-Proposal/main/Landing%20page.jpg", caption: "The main landing page serves as the central hub for all users, providing clear navigation to request clearance, access the admin panel, or view the 'Green List'." },
+            { src: "https://raw.githubusercontent.com/theva73/Business-Proposal/main/Admin%20Dashboard.jpg", caption: "The Admin Dashboard provides a real-time overview of pending requests and existing clearances, with intuitive controls for management." },
+            { src: "https://raw.githubusercontent.com/theva73/Business-Proposal/main/appendix-c.jpg", caption: "The 'Green List' view for on-ground staff, featuring a prominent search bar and voice command option for quick, hands-free vehicle verification." },
+            { src: "https://raw.githubusercontent.com/theva73/Business-Proposal/main/Secure%20Access%20login.jpg", caption: "The Secure Access portal requires both a valid User ID and successful geo-location verification to grant entry, ensuring a robust security layer." },
+            { src: "https://raw.githubusercontent.com/theva73/Business-Proposal/main/Request%20Vehicle%20Clearance%20Form.jpg", caption: "The public-facing clearance request form is designed for simplicity, allowing external users to submit necessary details with ease." },
+            { src: "https://raw.githubusercontent.com/theva73/Business-Proposal/main/Access%20Control%20setting.jpg", caption: "Advanced access control settings allow administrators to manage authorized User IDs and define approved geographical zones (geo-fencing)." },
+            { src: "https://raw.githubusercontent.com/theva73/Business-Proposal/main/appendix-g.jpg", caption: "The database management panel offers powerful tools for administrators, including real-time statistics, data export, and secure data-wipe functions." }
         ];
 
         // --- 1. The Markdown content of your proposal ---
@@ -161,7 +163,7 @@ The Vehicle Clearance Management System is a comprehensive, web-based platform t
 
 * **Intuitive User Interface:** The user-friendly design caters to both administrators and requesters, ensuring a smooth and efficient process for everyone involved. The "Request Clearance" feature allows external users to easily submit requests through a simple web form **(See Appendix E)**.
 
-* **Advanced Data and Reporting:** The system can generate comprehensive PDF reports of all vehicle clearances and requests over a 24-hour period. These reports are generated on the client-side using the **jsPDF library**, ensuring fast and efficient report creation without server-side processing.
+* **Advanced Data and Reporting:** The system can generate comprehensive PDF reports of all vehicle clearances and requests over a 24-hour period. These reports are generated on the client-side, ensuring fast and efficient report creation without server-side processing.
 
 * **Voice-Enabled Search:** For on-the-ground staff, the system includes a voice search feature that allows for quick and hands-free lookups of vehicle clearance statuses. This functionality is powered by the **Web Speech API**, providing a reliable and accessible way to interact with the system in various operational environments.
 
@@ -222,11 +224,13 @@ The Vehicle Clearance Management System is more than just an operational tool; i
             let htmlContent = converter.makeHtml(markdownContent);
             
             // --- Create Appendix HTML ---
-            let appendixHtml = '<div class="page-break"></div><div class="pdf-block"><h2>Appendix</h2></div>';
+            // This now includes a page-break element recognized by html2pdf.js
+            let appendixHtml = '<div class="html2pdf__page-break"></div><h2>Appendix</h2>';
             appendixImages.forEach((img, index) => {
                 const appendixLetter = String.fromCharCode(65 + index); // A, B, C...
+                // Added 'pdf-avoid-break' class to each appendix item to prevent it from splitting across pages
                 appendixHtml += `
-                    <div class="pdf-block appendix-item">
+                    <div class="pdf-avoid-break appendix-item">
                         <h3>Appendix ${appendixLetter}</h3>
                         <figure>
                             <img src="${img.src}" alt="Appendix ${appendixLetter}: ${img.caption}">
@@ -237,21 +241,7 @@ The Vehicle Clearance Management System is more than just an operational tool; i
             });
 
             // Combine main content and appendix
-            let finalHtml = htmlContent + appendixHtml;
-
-            // **NEW:** Wrap all top-level elements in unbreakable blocks
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = finalHtml;
-            let structuredHtml = '';
-            tempDiv.childNodes.forEach(node => {
-                if (node.nodeType === 1) { // It's an element
-                    structuredHtml += `<div class="pdf-block">${node.outerHTML}</div>`;
-                } else if (node.nodeType === 3 && node.textContent.trim() !== '') { // It's non-empty text
-                    structuredHtml += `<div class="pdf-block"><p>${node.textContent}</p></div>`;
-                }
-            });
-            
-            contentDiv.innerHTML = structuredHtml;
+            contentDiv.innerHTML = htmlContent + appendixHtml;
         });
 
         // --- 3. Set up the PDF download functionality ---
@@ -267,15 +257,15 @@ The Vehicle Clearance Management System is more than just an operational tool; i
 
             const element = document.getElementById('proposal-content');
             
-            // Configuration for html2pdf
+            // **REVISED PDF Configuration for better page breaks**
             const opt = {
                 margin:       [0.75, 0.5, 0.75, 0.5], // [top, left, bottom, right] in inches
                 filename:     'Business-Proposal-Vehicle-Clearance-System.pdf',
                 image:        { type: 'jpeg', quality: 0.98 },
                 html2canvas:  { scale: 2, useCORS: true, letterRendering: true },
-                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' },
-                // **REVISED:** Use autoPaging with CSS mode for better results
-                autoPaging: 'slice'
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+                // NOTE: Removed the 'autoPaging' option to use the library's more stable default mode.
+                // The page breaks are now controlled by the '.html2pdf__page-break' class in the HTML.
             };
 
             // Generate the PDF
