@@ -29,11 +29,11 @@
       .no-break-before { break-before: auto !important; page-break-before: auto !important; }
 
       /* Appendix: two appendix blocks per page */
-      .appendix { break-inside: avoid; page-break-inside: avoid; margin: 8mm 0; padding: 10px; }
-      /* Do NOT force a break before the first appendix so the heading stays with A */
-      .appendix:nth-of-type(2n) { break-after: page; page-break-after: always; }
-      .appendix img { max-width: 100% !important; height: auto !important; max-height: 12cm !important; }
+      .appendix { break-inside: avoid; page-break-inside: avoid; margin: 6mm 0; padding: 8px 10px; }
+      .appendix p { margin: 6px 0 8px; }
+      .appendix img { max-width: 100% !important; height: auto !important; max-height: 10.5cm !important; }
       img { max-width: 100% !important; height: auto !important; }
+    }
     }
   </style>
 </head>
@@ -142,7 +142,7 @@
 
     <div class="appendix">
       <h3>Appendix G: Scalability with Firebase</h3>
-      <p>Real-time listeners, anonymous auth, auto-scaling, and global CDN.</p>
+      <p>The admin can generate a <strong>Vehicle Clearance Report</strong> as a clean, print‑ready view: a 24‑hour summary showing each vehicle’s status plus a totals section (records, active, pending). Use the browser’s <em>Print / Save as PDF</em> to export an A4 PDF for sharing, shift handover, or audit.</p>
       <img data-name="Clearance Report.jpg" alt="Clearance Report" loading="lazy" decoding="async" />
     </div>
 
