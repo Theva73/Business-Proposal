@@ -9,7 +9,7 @@
     body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: var(--maxw); margin: 0 auto; padding: 20px; background-color: #f9f9f9; }
     h1, h2, h3 { color: #2c3e50; }
     h1 { text-align: center; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
-    section { margin-bottom: 40px; }
+    section { margin-bottom: 28px; }
     ul { list-style-type: disc; padding-left: 20px; }
     .appendix { background-color: #ecf0f1; padding: 15px; border-left: 5px solid #bdc3c7; margin-bottom: 20px; }
     .appendix img { max-width: 100%; height: auto; display: block; margin: 10px auto; border: 1px solid #ddd; border-radius: 4px; }
@@ -22,11 +22,16 @@
       * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       body { background: #fff !important; max-width: 100%; padding: 0; }
       .print-btn { display: none !important; }
-      /* Each major topic begins on a new page except the first */
-      section + section { break-before: page; page-break-before: always; }
-      /* Each appendix block starts on its own page and stays together */
-      .appendix { break-before: page; page-break-before: always; break-inside: avoid; page-break-inside: avoid; }
-      .appendix img { break-inside: avoid; page-break-inside: avoid; }
+
+      /* Controlled page starts */
+      .page-start { break-before: page; page-break-before: always; }
+      .keep-together { break-inside: avoid; page-break-inside: avoid; }
+      .no-break-before { break-before: auto !important; page-break-before: auto !important; }
+
+      /* Appendix: show two appendix blocks per page, each block kept intact */
+      .appendix { break-inside: avoid; page-break-inside: avoid; }
+      .appendix:first-of-type { break-before: page; page-break-before: always; }
+      .appendix:nth-of-type(2n) { break-after: page; page-break-after: always; }
       img { max-width: 100% !important; height: auto !important; }
     }
   </style>
@@ -41,12 +46,12 @@
     <p>This proposal outlines the implementation of the Vehicle Clearance Management System (VCMS), a comprehensive digital platform designed to revolutionize vehicle access control and management. Drawing from real-world operational insights, VCMS addresses the inefficiencies of manual processes by providing secure, real-time tracking, multi-factor authentication, and automated workflows. Key tools include voice-enabled search, geolocation-based access validation, and AI-assisted notifications, which collectively enhance security, reduce administrative burdens, and ensure seamless daily operations. By optimizing internal vehicle clearance processes, VCMS not only improves efficiency but also opens a new revenue stream through a Software-as-a-Service (SaaS) model for external organizations facing similar challenges.</p>
   </section>
 
-  <section>
+  <section class="page-start">
     <h2>1. The Inspiration: From Insight to Innovation</h2>
     <p>The inspiration for VCMS stemmed from a recent meeting with the OC (Officer-in-Charge) of PCC, where discussions revealed critical pain points in manual vehicle clearance operations, such as delayed approvals, lack of real-time visibility, and security vulnerabilities. Initially conceived as an internal tool to manage incoming vehicles, the system evolved based on this feedback to address broader limitations within security operations, including those in the Singapore Police Force (SPF). By incorporating these insights, VCMS transforms operational roadblocks into streamlined processes, ensuring faster decision-making, enhanced accountability, and reduced errors in high-stakes environments.</p>
   </section>
 
-  <section>
+  <section class="page-start">
     <h2>2. Our Solution: The Vehicle Clearance Management System</h2>
     <p>VCMS is a web-based platform built with modern technologies like Firebase for authentication and data storage, JavaScript for dynamic interactions, and integrations with AI (Gemini API) and web APIs (Speech Recognition and Geolocation). It features distinct user roles—administrators for oversight, secure users (e.g., on-ground personnel) for checks, and public users for requests—ensuring tailored access and functionality.</p>
     <p>The system supports daily operations through intuitive tools that automate and secure every stage of vehicle clearance:</p>
@@ -59,51 +64,43 @@
     </ul>
   </section>
 
-  <section>
-    <h2>Key Features and Technical Specifications</h2>
-    <ul>
-      <li><strong>Real-Time Tracking and Management</strong>: Admin dashboard with live updates (Appendix B). On-ground users access synced data (Appendix C).</li>
-      <li><strong>Enhanced Security and Access Control</strong>: Multi-factor login combining User ID validation, geolocation checks, and activity logging (Appendix D).</li>
-      <li><strong>Intuitive User Interface</strong>: Public request form with date pickers, voice search, and mobile-responsive design (Appendix E).</li>
-      <li><strong>Advanced Reporting and Notifications</strong>: Client-side PDF generation for summaries, plus AI-powered emails.</li>
-      <li><strong>Reliability & Scalability</strong>: Hosted on Google Firebase (Appendix F & G).</li>
-    </ul>
-  </section>
+  <!-- 3 & 4: back-to-back, kept together on one page if possible -->
+  <div class="page-start keep-together">
+    <section>
+      <h2>3. Revenue Model</h2>
+      <ul>
+        <li><strong>Tier 1 – Basic</strong>: Core management, tracking, basic reports.</li>
+        <li><strong>Tier 2 – Professional</strong>: Secure Access + expanded VVIP list.</li>
+        <li><strong>Tier 3 – Enterprise</strong>: DB management, custom reports, priority support.</li>
+      </ul>
+    </section>
+    <section class="no-break-before">
+      <h2>4. Financial Projections</h2>
+      <p>(Internal use — add costs, revenue growth, break-even.)</p>
+    </section>
+  </div>
 
-  <section>
-    <h2>3. Revenue Model</h2>
-    <ul>
-      <li><strong>Tier 1 – Basic</strong>: Core management, tracking, basic reports.</li>
-      <li><strong>Tier 2 – Professional</strong>: Secure Access + expanded VVIP list.</li>
-      <li><strong>Tier 3 – Enterprise</strong>: DB management, custom reports, priority support.</li>
-    </ul>
-  </section>
+  <!-- 5,6,7: single page compact block -->
+  <div class="page-start keep-together">
+    <section class="no-break-before">
+      <h2>5. Competitive Advantage</h2>
+      <p>VCMS blends user-friendly tools with robust security features: voice search for efficient on-ground checks, geolocation for site-restricted access, AI-assisted notifications for seamless communication, and real-time cloud sync for scalability and reliability.</p>
+    </section>
+    <section class="no-break-before">
+      <h2>6. Implementation Plan</h2>
+      <ul>
+        <li><strong>Phase 1 (30 days)</strong>: Pilot deployment and feedback integration.</li>
+        <li><strong>Phase 2 (30–60 days)</strong>: Feature refinement and pricing tiers.</li>
+        <li><strong>Phase 3 (90 days)</strong>: Full launch with training.</li>
+      </ul>
+    </section>
+    <section class="no-break-before">
+      <h2>7. Conclusion</h2>
+      <p>VCMS upgrades vehicle clearance operations with real-time management, secure verifications, and automated workflows, positioning the organization for scalable SaaS growth.</p>
+    </section>
+  </div>
 
-  <section>
-    <h2>4. Competitive Advantage</h2>
-    <p>VCMS stands out with its blend of user-friendly tools and robust security features, such as voice search, geolocation, and AI-assisted notifications. Real-time cloud synchronization eliminates data silos and enables scalable operations.</p>
-  </section>
-
-  <section>
-    <h2>5. Implementation Plan</h2>
-    <ul>
-      <li><strong>Phase 1 (30 days)</strong>: Pilot deployment and feedback integration.</li>
-      <li><strong>Phase 2 (30–60 days)</strong>: Feature refinement and pricing tiers.</li>
-      <li><strong>Phase 3 (90 days)</strong>: Full launch with training.</li>
-    </ul>
-  </section>
-
-  <section>
-    <h2>6. Financial Projections</h2>
-    <p>(Internal use — add costs, revenue growth, break-even.)</p>
-  </section>
-
-  <section>
-    <h2>7. Conclusion</h2>
-    <p>VCMS represents a transformative upgrade to vehicle clearance operations, supporting real-time management, secure verifications, and automated workflows.</p>
-  </section>
-
-  <section>
+  <section class="page-start">
     <h2>Appendix</h2>
 
     <div class="appendix">
@@ -182,8 +179,10 @@
       // Set on load and also before printing (so print captures images)
       setSources();
       if (window.matchMedia) {
-        const mediaQueryList = window.matchMedia('print');
-        mediaQueryList.addListener(function(mql){ if (mql.matches) setSources(); });
+        const mql = window.matchMedia('print');
+        if (mql && mql.addListener) {
+          mql.addListener(function(q){ if (q.matches) setSources(); });
+        }
       }
       window.onbeforeprint = setSources;
     })();
