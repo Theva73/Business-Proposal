@@ -5,45 +5,56 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Business Proposal PDF Generator</title>
 
+  <!-- libs -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
   <style>
     :root { --page-w: 8.5in; --page-h: 11in; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background:#f3f4f6; }
-    #proposal-content { max-width: 820px; margin: 0 auto; color: #111827; }
+    /* Always give html/body a white background so canvases aren't transparent */
+    html, body { background:#ffffff; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, Inter, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    /* Keep containers fully sized/painted (iOS fix for 0px width captures) */
+    #proposal-container, #proposal-content {
+      background:#ffffff !important;
+      width:100% !important;
+      min-height:auto !important;
+      color:#111827;
+    }
+    #proposal-content { max-width:820px; margin:0 auto; }
 
     /* Typography */
-    #proposal-content h1 { font-size: 2rem; font-weight: 700; margin: 0 0 1rem; }
-    #proposal-content h2 { font-size: 1.5rem; font-weight: 700; margin: 1.6rem 0 .9rem; }
-    #proposal-content h3 { font-size: 1.15rem; font-weight: 600; margin: 1.1rem 0 .5rem; }
-    #proposal-content p, #proposal-content li { font-size: 1rem; line-height: 1.65; margin-bottom: .7rem; }
-    #proposal-content ul { list-style: disc; padding-left: 1.4rem; }
+    #proposal-content h1 { font-size:2rem; font-weight:700; margin:0 0 1rem; }
+    #proposal-content h2 { font-size:1.5rem; font-weight:700; margin:1.6rem 0 .9rem; }
+    #proposal-content h3 { font-size:1.15rem; font-weight:600; margin:1.1rem 0 .5rem; }
+    #proposal-content p, #proposal-content li { font-size:1rem; line-height:1.65; margin-bottom:.7rem; }
+    #proposal-content ul { list-style:disc; padding-left:1.4rem; }
 
-    /* Keep elements intact where possible (reduces awkward splits/blank tails) */
+    /* Fill the page cleanly: avoid splitting common blocks */
     h2, h3, p, ul, figure { page-break-inside: avoid; }
 
     /* Appendix visuals */
-    .appendix-item { margin: .5rem 0 1.2rem; }
-    .appendix-item img {
-      max-width: 100%;
-      height: auto;
-      border: 1px solid #e5e7eb;
-      border-radius: .5rem;
-      margin: .4rem 0 .6rem;
-      /* Ensure an image never forces an extra empty page below it */
+    .appendix-item { margin:.5rem 0 1.2rem; }
+    .appendix-item img{
+      max-width:100%; height:auto;
+      border:1px solid #e5e7eb; border-radius:.5rem;
+      margin:.4rem 0 .6rem;
       max-height: calc(var(--page-h) - 1.6in);
       object-fit: contain;
     }
-    .appendix-item figcaption { font-size: .9rem; color:#4b5563; text-align:center; margin-bottom: .8rem; }
+    .appendix-item figcaption{ font-size:.9rem; color:#4b5563; text-align:center; margin-bottom:.8rem; }
 
-    /* Page-break helpers used by html2pdf */
-    .pb { page-break-before: always; }     /* targeted break insertion */
-    .pdf-avoid { page-break-inside: avoid; }
+    /* Page-break helpers honored by html2pdf (pagebreak.mode=['css','legacy']) */
+    .pb { page-break-before: always; }          /* targeted page start */
+    .pdf-avoid { page-break-inside: avoid; }    /* keep together */
 
     /* Button spinner */
-    .spinner { border: 4px solid rgba(0,0,0,.1); width: 20px; height: 20px; border-radius: 50%; border-left-color: #ffffff; animation: spin 1s linear infinite; }
+    .spinner{ border:4px solid rgba(0,0,0,.1); width:20px; height:20px; border-radius:50%;
+              border-left-color:#ffffff; animation:spin 1s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
@@ -69,7 +80,7 @@
   </div>
 
   <script>
-    /* ---- FULL BUSINESS CONTENT (restored) ---- */
+    /* ------------------ FULL BUSINESS CONTENT ------------------ */
     const markdownContent = `
 # Proposal: Implementing the Vehicle Clearance Management System
 
@@ -125,7 +136,7 @@ Ease-of-use + robust security + voice and geolocation features not common in off
 This system is both an operational upgrade and a strategic revenue opportunity, enabling us to serve internal needs and external clients with a scalable SaaS.
 `;
 
-    /* ---- Appendix images ---- */
+    /* ------------------ APPENDIX IMAGES & LOADER ------------------ */
     const RAW_BASE = "https://raw.githubusercontent.com/theva73/Business-Proposal/main/";
     const appendixItems = [
       { file: "Landing page.jpg", caption: "Main landing page." },
@@ -137,76 +148,74 @@ This system is both an operational upgrade and a strategic revenue opportunity, 
       { file: "Database management .jpg", caption: "Database management tools (space before .jpg)." }
     ];
 
-    /* ---- Robust image loader (handles odd spaces/renames) ---- */
-    function buildCandidates(file) {
+    // Build filename variants to survive tiny renames (spaces/underscores/dashes)
+    function variants(file){
       const v = new Set();
       v.add(file);
-      v.add(file.replace(/\s{2,}/g, ' '));
-      v.add(file.replace(/\s+/g, '_'));
-      v.add(file.replace(/\s+/g, '-'));
+      v.add(file.replace(/\s{2,}/g,' '));
+      v.add(file.replace(/\s+/g,'_'));
+      v.add(file.replace(/\s+/g,'-'));
       return Array.from(v);
     }
-    function tryLoadImg(imgEl, filename) {
-      const candidates = buildCandidates(filename).map(f => RAW_BASE + encodeURIComponent(f));
+    function loadWithFallback(imgEl, filename){
+      const cands = variants(filename).map(f => RAW_BASE + encodeURIComponent(f));
       let i = 0;
-      const next = () => {
-        if (i >= candidates.length) {
-          imgEl.outerHTML = '<div class="text-sm text-red-600 p-3 border border-red-200 rounded">Image failed to load: ' + filename + '</div>';
+      const tryNext = () => {
+        if(i >= cands.length){
+          imgEl.outerHTML = '<div class="text-sm text-red-600 p-3 border border-red-200 rounded">Image failed to load: '+filename+'</div>';
           return;
         }
-        imgEl.onerror = () => { i++; next(); };
+        imgEl.onerror = () => { i++; tryNext(); };
         imgEl.crossOrigin = 'anonymous';
-        imgEl.src = candidates[i];
+        imgEl.src = cands[i];
       };
-      next();
+      tryNext();
     }
 
-    /* ---- Render Markdown + targeted page-breaks ---- */
+    /* ------------------ RENDER ------------------ */
     document.addEventListener('DOMContentLoaded', () => {
       const root = document.getElementById('proposal-content');
+
+      // Convert markdown → HTML
       const md = new showdown.Converter();
       let html = md.makeHtml(markdownContent);
-
-      // Inject the main content
       root.innerHTML = html;
 
-      // Add targeted breaks so we don't waste pages:
+      // Targeted breaks: start "Our Solution" & "Implementation Plan" on new pages
       const h2s = Array.from(root.querySelectorAll('h2'));
       h2s.forEach(h => {
         const t = h.textContent.trim().toLowerCase();
-        if (
-          t.startsWith('2. our solution') ||
-          t.startsWith('5. implementation plan')
-        ) h.classList.add('pb');           // break before these key sections ONLY
+        if (t.startsWith('2. our solution') || t.startsWith('5. implementation plan')) {
+          h.classList.add('pb');
+        }
       });
 
-      // Build Appendix (no break before the "Appendix" heading itself)
-      const appendixHeader = document.createElement('h2');
-      appendixHeader.textContent = 'Appendix';
-      appendixHeader.className = 'pb';     // start Appendix on a fresh page
-      root.appendChild(appendixHeader);
+      // Build Appendix section
+      const appxH2 = document.createElement('h2');
+      appxH2.textContent = 'Appendix';
+      appxH2.className = 'pb';
+      root.appendChild(appxH2);
 
       appendixItems.forEach((item, idx) => {
         const letter = String.fromCharCode(65 + idx);
-        const wrap = document.createElement('div');
-        wrap.className = 'appendix-item pdf-avoid pb';  // each item on its own page
-        wrap.innerHTML = `
+        const box = document.createElement('div');
+        box.className = 'appendix-item pdf-avoid pb';
+        box.innerHTML = `
           <h3>Appendix ${letter}</h3>
           <figure>
             <img id="appx-${letter}" alt="Appendix ${letter}">
             <figcaption>${item.caption}</figcaption>
-          </figure>
-        `;
-        root.appendChild(wrap);
+          </figure>`;
+        root.appendChild(box);
       });
 
-      // Load images after nodes exist
+      // Load the images now that nodes exist
       appendixItems.forEach((item, idx) => {
         const letter = String.fromCharCode(65 + idx);
-        tryLoadImg(document.getElementById(`appx-${letter}`), item.file);
+        loadWithFallback(document.getElementById(`appx-${letter}`), item.file);
       });
 
-      /* ---- Download handling: wait for images + one paint frame ---- */
+      /* ------------------ DOWNLOAD HANDLER ------------------ */
       const downloadBtn = document.getElementById('download-btn');
       const spinner = document.getElementById('spinner');
       const btnText = document.getElementById('btn-text');
@@ -216,6 +225,7 @@ This system is both an operational upgrade and a strategic revenue opportunity, 
         spinner.classList.remove('hidden');
         downloadBtn.disabled = true;
 
+        // Wait for all images (load OR error), then one paint frame (iOS whiteout fix)
         const imgs = root.querySelectorAll('img');
         await Promise.all(Array.from(imgs).map(img =>
           img.complete ? Promise.resolve() :
@@ -224,14 +234,14 @@ This system is both an operational upgrade and a strategic revenue opportunity, 
         await new Promise(requestAnimationFrame);
 
         const opt = {
-          /* slightly tighter margins to better fill pages */
-          margin: [0.6, 0.5, 0.65, 0.5],  // top, left, bottom, right (in)
+          /* snug but readable margins */
+          margin: [0.6, 0.5, 0.65, 0.5],
           filename: 'Business-Proposal-Vehicle-Clearance-System.pdf',
           image: { type: 'jpeg', quality: 0.98 },
           html2canvas: {
             scale: 2,
             useCORS: true,
-            backgroundColor: '#ffffff',
+            backgroundColor: '#ffffff',   // force solid background
             allowTaint: false,
             logging: false,
             windowWidth: root.scrollWidth,
@@ -240,12 +250,13 @@ This system is both an operational upgrade and a strategic revenue opportunity, 
           jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
           pagebreak: {
             mode: ['css', 'legacy'],
-            avoid: 'h2, h3, p, ul, figure, .pdf-avoid'  // pack content; avoid chopping
+            avoid: 'p, h2, h3, ul, figure, .pdf-avoid'
           }
         };
 
-        try { await html2pdf().set(opt).from(root).save(); }
-        finally {
+        try {
+          await html2pdf().set(opt).from(root).save();
+        } finally {
           btnText.textContent = 'Download PDF';
           spinner.classList.add('hidden');
           downloadBtn.disabled = false;
