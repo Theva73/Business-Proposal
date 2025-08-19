@@ -28,10 +28,11 @@
       .keep-together { break-inside: avoid; page-break-inside: avoid; }
       .no-break-before { break-before: auto !important; page-break-before: auto !important; }
 
-      /* Appendix: show two appendix blocks per page, each block kept intact */
-      .appendix { break-inside: avoid; page-break-inside: avoid; }
-      .appendix:first-of-type { break-before: page; page-break-before: always; }
+      /* Appendix: two appendix blocks per page */
+      .appendix { break-inside: avoid; page-break-inside: avoid; margin: 8mm 0; padding: 10px; }
+      /* Do NOT force a break before the first appendix so the heading stays with A */
       .appendix:nth-of-type(2n) { break-after: page; page-break-after: always; }
+      .appendix img { max-width: 100% !important; height: auto !important; max-height: 12cm !important; }
       img { max-width: 100% !important; height: auto !important; }
     }
   </style>
